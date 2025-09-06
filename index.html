@@ -1,22 +1,154 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
   <meta charset="utf-8" />
-  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@600&display=swap" rel="stylesheet">
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>deutwp10</title>
-  <link rel="icon" href="favicon.png" type="image/svg+xml" />
-  <link rel="alternate icon" href="favicon.png" sizes="any" />
-  <link rel="stylesheet" href="style.css" />
+
+  <link rel="icon" href="favicon.png" />
+
+  <style>
+    :root {
+      --bg: #000;
+      --fg: #000000;
+      --fade-ms: 1200ms;
+      --breath-ms: 5000ms;
+      --max-w: min(88vw, 780px);
+      --shadow: 0 20px 60px rgba(0,0,0,.7);
+
+      /* 👇 теперь можешь менять прозрачность картинки тут */
+      --img-opacity: 0.85;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      display: grid;
+      place-items: center;
+      min-height: 100dvh;
+      overflow: hidden;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    .backglow {
+      position: fixed;
+      inset: -20vmax;
+      pointer-events: none;
+      background:
+        radial-gradient(60vmax 60vmax at 50% 30%, rgba(24, 24, 24, 0.08), transparent 60%),
+        radial-gradient(40vmax 40vmax at 20% 80%, rgba(24, 24, 24, 0.08), transparent 60%),
+        radial-gradient(50vmax 50vmax at 80% 70%, rgba(24, 24, 24, 0.08), transparent 60%);
+      filter: blur(40px);
+      opacity: 0;
+      animation: fadeBg var(--fade-ms) ease forwards 300ms;
+    }
+    @keyframes fadeBg { to { opacity: 1; } }
+
+    .stage {
+      position: relative;
+      width: 100%;
+      display: grid;
+      place-items: center;
+      padding: 6vmin 0 10vmin;
+    }
+    .frame {
+      max-width: var(--max-w);
+      width: 100%;
+      aspect-ratio: auto;
+      transform: translateZ(0);
+      animation: reveal var(--fade-ms) cubic-bezier(.16,.84,.44,1) forwards,
+                 breath var(--breath-ms) ease-in-out infinite 1400ms;
+      filter: drop-shadow(var(--shadow));
+    }
+    .frame img {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 12px;
+      user-select: none;
+      -webkit-user-drag: none;
+      will-change: transform, filter, opacity;
+      opacity: var(--img-opacity); /* 👈 прозрачность регулируется переменной */
+    }
+
+    @keyframes reveal {
+      0%   { opacity: 0; transform: scale(1.08); filter: blur(10px) saturate(1.1); }
+      60%  { opacity: var(--img-opacity); transform: scale(1.01); filter: blur(2px)  saturate(1.05); }
+      100% { opacity: var(--img-opacity); transform: scale(1.00); filter: blur(0)    saturate(1.0); }
+    }
+    @keyframes breath {
+      0%, 100% { transform: scale(1.000); }
+      50%      { transform: scale(1.005); }
+    }
+
+    .stage[data-tilt="on"] .frame { transition: transform .2s ease; }
+    .stage[data-tilt="on"].tilting .frame { transition: none; }
+
+    footer {
+      position: fixed;
+      inset-inline: 0;
+      bottom: 10px;
+      text-align: center;
+      font-size: 12px;
+      letter-spacing: .02em;
+      color: rgba(65, 65, 65, 0.6);
+      opacity: 0;
+      animation: fadeInFooter 900ms ease forwards 900ms;
+      user-select: none;
+    }
+    @keyframes fadeInFooter { to { opacity: 1; } }
+
+    @media (max-width: 520px) {
+      .frame img { border-radius: 12px; }
+    }
+  </style>
 </head>
 <body>
-  <div class="bg" aria-hidden="true"></div>
+  <div class="backglow" aria-hidden="true"></div>
 
-  <main class="card" role="main">
-    <img class="photo" src="photo.jpg" alt="." />
+  <main class="stage" id="stage" data-tilt="on">
+    <div class="frame">
+      <img src="photo.jpg" alt="лакоста" />
+    </div>
   </main>
 
-  <footer class="mini">© deutwp10</footer>
-</body>
+  <footer>deutwp10 aka numbness</footer>
 
+  <script>
+    (function () {
+      const stage = document.getElementById('stage');
+      const frame = stage.querySelector('.frame');
+      let raf = null;
+
+      function onMove(e) {
+        if (stage.dataset.tilt !== 'on') return;
+        stage.classList.add('tilting');
+        const rect = stage.getBoundingClientRect();
+        const x = (e.clientX - rect.left) / rect.width;
+        const y = (e.clientY - rect.top)  / rect.height;
+        const maxTilt = 4;
+        const tiltX = (y - 0.5) * -maxTilt;
+        const tiltY = (x - 0.5) *  maxTilt;
+
+        if (!raf) {
+          raf = requestAnimationFrame(() => {
+            frame.style.transform = `rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
+            raf = null;
+          });
+        }
+      }
+      function onLeave() {
+        stage.classList.remove('tilting');
+        frame.style.transform = '';
+      }
+
+      stage.addEventListener('mousemove', onMove);
+      stage.addEventListener('mouseleave', onLeave);
+      if ('ontouchstart' in window) stage.dataset.tilt = 'off';
+    })();
+  </script>
+</body>
 </html>
