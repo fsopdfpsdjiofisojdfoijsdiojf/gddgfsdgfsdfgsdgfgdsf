@@ -4,20 +4,19 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>takamura.</title>
-
   <link rel="icon" href="favicon1.png" />
-
   <style>
     :root {
       --bg: #000;
-      --fg: #000000;
-      --fade-ms: 1200ms;
-      --breath-ms: 5000ms;
+      --fg: #c9c9c9;
+      --fade-ms: 800ms;
       --max-w: min(88vw, 780px);
-      --shadow: 0 20px 60px rgba(0,0,0,.7);
-
-      /* 👇 теперь можешь менять прозрачность картинки тут */
       --img-opacity: 1;
+      --radius: 8px;
+      --bar-h: 50px;
+      --bar-bg: rgba(0, 0, 0, 0.753);
+      --bar-border: rgba(15, 15, 15, 0.37);
+      --hover-ms: 100ms;
     }
 
     *, *::before, *::after { box-sizing: border-box; }
@@ -26,96 +25,131 @@
       margin: 0;
       background: var(--bg);
       color: var(--fg);
-      display: grid;
-      place-items: center;
       min-height: 100dvh;
       overflow: hidden;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      display: flex;
+      flex-direction: column;
     }
 
-    .backglow {
+    header {
       position: fixed;
-      inset: -20vmax;
-      pointer-events: none;
-      background:
-        radial-gradient(60vmax 60vmax at 50% 30%, rgba(24, 24, 24, 0.08), transparent 60%),
-        radial-gradient(40vmax 40vmax at 20% 80%, rgba(24, 24, 24, 0.08), transparent 60%),
-        radial-gradient(50vmax 50vmax at 80% 70%, rgba(24, 24, 24, 0.08), transparent 60%);
-      filter: blur(40px);
-      opacity: 0;
-      animation: fadeBg var(--fade-ms) ease forwards 300ms;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: var(--bar-h);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 14px;
+      background: var(--bar-bg);
+      backdrop-filter: blur(6px);
+      border-bottom: 0.5px solid var(--bar-border);
+      z-index: 10;
     }
-    @keyframes fadeBg { to { opacity: 1; } }
+    header .brand {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      transition: transform var(--hover-ms) ease;
+    }
+    header .brand:hover { transform: scale(1.06); }
+    header img {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      box-shadow: 0 0 4px rgba(0,0,0,0.4);
+      transition: box-shadow var(--hover-ms) ease;
+    }
+    header img:hover { box-shadow: 0 0 8px rgba(255,255,255,0.4); }
+    header .user {
+      font-size: 13px;
+      letter-spacing: .03em;
+      color: rgba(220,220,220,.9);
+      cursor: pointer;
+      transition: color var(--hover-ms) ease;
+    }
+    header .user:hover { color: #fff; }
 
     .stage {
-      position: relative;
-      width: 100%;
+      flex: 1;
       display: grid;
       place-items: center;
-      padding: 6vmin 0 10vmin;
+      padding: calc(var(--bar-h) + 12px) 0 10vmin;
     }
+
     .frame {
       max-width: var(--max-w);
       width: 100%;
       aspect-ratio: auto;
-      transform: translateZ(0);
-      animation: reveal var(--fade-ms) cubic-bezier(.16,.84,.44,1) forwards,
-                 breath var(--breath-ms) ease-in-out infinite 1400ms;
-      filter: drop-shadow(var(--shadow));
     }
-    .frame img {
+
+    figure { margin: 0; }
+
+    .shot {
       display: block;
       width: 100%;
       height: auto;
-      border-radius: 8px;
+      border-radius: var(--radius);
       user-select: none;
       -webkit-user-drag: none;
-      will-change: transform, filter, opacity;
-      opacity: var(--img-opacity); /* 👈 прозрачность регулируется переменной */
+      opacity: 0;
+      animation: fadeIn var(--fade-ms) ease forwards;
     }
 
-    @keyframes reveal {
-      0%   { opacity: 0; transform: scale(1.08); filter: blur(10px) saturate(1.1); }
-      60%  { opacity: var(--img-opacity); transform: scale(1.01); filter: blur(2px)  saturate(1.05); }
-      100% { opacity: var(--img-opacity); transform: scale(1.00); filter: blur(0)    saturate(1.0); }
+    figcaption.quote {
+      margin-top: 8px;
+      width: 100%;
+      max-width: 88%;
+      margin-inline: auto;
+      font-size: 10px;
+      line-height: 1.35;
+      letter-spacing: .02em;
+      color: rgba(122, 122, 122, 0.8);
+      text-align: center;
+      opacity: 0;
+      border-top: 0.5px solid rgba(255,255,255,.05);
+      padding-top: 6px;
+      animation: fadeUp 1200ms ease forwards 1000ms;
     }
-    @keyframes breath {
-      0%, 100% { transform: scale(1.000); }
-      50%      { transform: scale(1.005); }
-    }
+    figcaption.quote:empty { display: none; }
 
     .stage[data-tilt="on"] .frame { transition: transform .2s ease; }
     .stage[data-tilt="on"].tilting .frame { transition: none; }
 
-    footer {
-      position: fixed;
-      inset-inline: 0;
-      bottom: 10px;
-      text-align: center;
-      font-size: 12px;
-      letter-spacing: .02em;
-      color: rgba(65, 65, 65, 0.6);
-      opacity: 0;
-      animation: fadeInFooter 900ms ease forwards 900ms;
-      user-select: none;
+    @keyframes fadeIn {
+      0%   { opacity: 0; transform: scale(1.02); }
+      100% { opacity: 1; transform: scale(1); }
     }
-    @keyframes fadeInFooter { to { opacity: 1; } }
+
+    @keyframes fadeUp {
+      0%   { opacity: 0; transform: translateY(10px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
 
     @media (max-width: 520px) {
-      .frame img { border-radius: 12px; }
+      :root { --radius: 14px; --bar-h: 48px; }
+      header img { width: 24px; height: 24px; }
+      header .user { font-size: 12px; }
     }
   </style>
 </head>
 <body>
-  <div class="backglow" aria-hidden="true"></div>
+  <header>
+    <div class="brand" onclick="location.reload()">
+      <img src="favicon1.png" alt="logo" />
+    </div>
+    <div class="user">deutwp10 aka numbness</div>
+  </header>
 
   <main class="stage" id="stage" data-tilt="on">
     <div class="frame">
-      <img src="photo1.jpg" alt="лакоста" />
+      <figure>
+        <img class="shot" src="photo1.jpg" alt="takamura" />
+        <figcaption class="quote" id="quote"></figcaption>
+      </figure>
     </div>
   </main>
-
-  <footer>deutwp10 aka numbness</footer>
 
   <script>
     (function () {
@@ -148,10 +182,27 @@
       stage.addEventListener('mousemove', onMove);
       stage.addEventListener('mouseleave', onLeave);
       if ('ontouchstart' in window) stage.dataset.tilt = 'off';
+
+      const quotes = [
+        "the world rusts. i remain sharp.",
+        "death is a craft. mine is flawless.",
+        "i don’t fight. i erase.",
+        "every swing writes your final chapter.",
+        "i am eternal, like the darkness beyond the light.",
+        "steel never doubts. neither do I.",
+        "your end is only my beginning.",
+        "silence falls after my blade.",
+        "unseen, unrivaled, unstoppable.",
+        "fear sharpens nothing. i am already a blade.",
+        "you think i'm senile, don't you?",
+        "takamura was described as a killer with no brakes.",
+        "He hates the people who are scum that dont deserve to live.",
+        "Takamura likes nothing.",
+        "takamura."
+      ];
+      const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+      document.getElementById('quote').textContent = `“${randomQuote}”`;
     })();
   </script>
 </body>
 </html>
-
-
-
