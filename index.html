@@ -6,204 +6,215 @@
   <title>takamura.</title>
   <link rel="icon" href="favicon1.png" />
   <style>
-    :root {
-      --bg: #000;
-      --fg: #c9c9c9;
-      --fade-ms: 800ms;
-      --max-w: min(88vw, 780px);
-      --img-opacity: 1;
-      --radius: 6px;
-      --bar-h: 50px;
-      --bar-bg: rgba(0, 0, 0, 0.753);
-      --bar-border: rgba(15, 15, 15, 0.37);
-      --hover-ms: 100ms;
+    :root{
+      --bg:#000;
+      --fg:#c9c9c9;
+      --fade-ms:800ms;
+      --max-w:min(88vw,780px);
+      --radius:6px;
+      --bar-h:52px;
+      --bar-bg:rgba(0,0,0,.753);
+      --bar-border:rgba(15,15,15,.37);
+      --hover-ms:100ms;
+
+      --tilt-max:5;
+      --squash-max:.014;
+      --cursor-size:4px;
     }
 
-    *, *::before, *::after { box-sizing: border-box; }
-    html, body { height: 100%; }
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--fg);
-      min-height: 100dvh;
-      overflow: hidden;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      display: flex;
-      flex-direction: column;
+    *,*::before,*::after{box-sizing:border-box;}
+    html,body{height:100%;}
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--fg);
+      min-height:100dvh;
+      overflow:hidden;
+      font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      display:flex;
+      flex-direction:column;
+      position:relative;
+      isolation:isolate;
+      cursor:none;
     }
 
-    header {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: var(--bar-h);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0 14px;
-      background: var(--bar-bg);
-      backdrop-filter: blur(6px);
-      border-bottom: 0.5px solid var(--bar-border);
-      z-index: 10;
-    }
-    header .brand {
-      display: flex;
-      align-items: center;
-      cursor: pointer;
-      transition: transform var(--hover-ms) ease;
-    }
-    header .brand:hover { transform: scale(1.06); }
-    header img {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      box-shadow: 0 0 4px rgba(0,0,0,0.4);
-      transition: box-shadow var(--hover-ms) ease;
-    }
-    header img:hover { box-shadow: 0 0 8px rgba(255,255,255,0.4); }
-    header .user {
-      font-size: 13px;
-      letter-spacing: .03em;
-      color: rgba(220,220,220,.9);
-      cursor: pointer;
-      transition: color var(--hover-ms) ease;
-    }
-    header .user:hover { color: #fff; }
-
-    .stage {
-      flex: 1;
-      display: grid;
-      place-items: center;
-      padding: calc(var(--bar-h) + 12px) 0 10vmin;
+    /* задний фон страницы */
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      z-index:-1;
+      opacity:0.2;
+      background:url("bg.png") center/cover no-repeat;
+      filter:blur(12px) brightness(0.6);
     }
 
-    .frame {
-      max-width: var(--max-w);
-      width: 100%;
-      aspect-ratio: auto;
+    header{
+      position:fixed; top:0; left:0; right:0;
+      height:var(--bar-h);
+      display:flex; justify-content:space-between; align-items:center;
+      padding:0 23px;
+      background:var(--bar-bg);
+      backdrop-filter:blur(6px);
+      border-bottom:.5px solid var(--bar-border);
+      z-index:10;
+      opacity:0; transform:translateY(-8px);
+      animation:headerIn 680ms cubic-bezier(.22,1,.36,1) forwards 120ms;
+    }
+    @keyframes headerIn{to{opacity:1; transform:translateY(0);}}
+
+    header .brand{display:flex; align-items:center; cursor:pointer;}
+    header .brand:hover{transform:scale(1.06);}
+    header img{width:28px; height:28px; border-radius:50%; box-shadow:0 0 4px rgba(0,0,0,.4);}
+    header .user{font-size:13px; letter-spacing:.03em; color:rgba(220,220,220,.9); cursor:pointer;}
+    header .user:hover{color:#fff;}
+
+    .stage{
+      flex:1; display:grid; place-items:center;
+      padding:calc(var(--bar-h) + 12px) 0 10vmin;
+      perspective:1000px;
+    }
+    .frame{
+      max-width:var(--max-w); width:100%;
+      aspect-ratio:auto;
+      will-change:transform;
+      transition:transform .18s ease;
     }
 
-    figure { margin: 0; }
-
-    .shot {
-      display: block;
-      width: 100%;
-      height: auto;
-      border-radius: var(--radius);
-      user-select: none;
-      -webkit-user-drag: none;
-      opacity: 0;
-      animation: fadeIn var(--fade-ms) ease forwards;
+    .shot{
+      display:block;
+      width:100%; height:auto;
+      border-radius:var(--radius);
+      opacity:0;
+      animation:fadeIn var(--fade-ms) ease forwards 80ms;
+      position:relative;
+      z-index:1;
     }
 
-    figcaption.quote {
-      margin-top: 8px;
-      width: 100%;
-      max-width: 88%;
-      margin-inline: auto;
-      font-size: 10px;
-      line-height: 1.35;
-      letter-spacing: .02em;
-      color: rgba(122, 122, 122, 0.8);
-      text-align: center;
-      opacity: 0;
-      border-top: 0.5px solid rgba(255,255,255,.05);
-      padding-top: 6px;
-      animation: fadeUp 1200ms ease forwards 1000ms;
+    figcaption.quote{
+      margin-top:8px; max-width:88%; margin-inline:auto;
+      font-size:10px; line-height:1.35;
+      color:rgba(122,122,122,.8); text-align:center;
+      opacity:0;
+      border-top:.5px solid rgba(255,255,255,.05);
+      padding-top:6px;
+      animation:fadeUp 1200ms ease forwards 1000ms;
     }
-    figcaption.quote:empty { display: none; }
+    figcaption.quote:empty{display:none;}
 
-    .stage[data-tilt="on"] .frame { transition: transform .2s ease; }
-    .stage[data-tilt="on"].tilting .frame { transition: none; }
+    @keyframes fadeIn{0%{opacity:0; transform:scale(1.02)} 100%{opacity:1; transform:scale(1)}}
+    @keyframes fadeUp{0%{opacity:0; transform:translateY(10px)} 100%{opacity:1; transform:translateY(0)}}
 
-    @keyframes fadeIn {
-      0%   { opacity: 0; transform: scale(1.02); }
-      100% { opacity: 1; transform: scale(1); }
-    }
-
-    @keyframes fadeUp {
-      0%   { opacity: 0; transform: translateY(10px); }
-      100% { opacity: 1; transform: translateY(0); }
+    .cursor{
+      position:fixed; left:0; top:0; z-index:20; pointer-events:none;
+      width:var(--cursor-size); height:var(--cursor-size);
+      margin-left:calc(var(--cursor-size)/-2); margin-top:calc(var(--cursor-size)/-2);
+      border-radius:50%;
+      background:#fff;
+      transform:translate(-100px,-100px);
+      will-change:transform;
     }
 
-    @media (max-width: 520px) {
-      :root { --radius: 14px; --bar-h: 48px; }
-      header img { width: 24px; height: 24px; }
-      header .user { font-size: 12px; }
+    @media (max-width:520px){
+      :root{--radius:14px; --bar-h:48px;}
+      header img{width:24px;height:24px;}
+      header .user{font-size:12px;}
+      body{cursor:auto;}
+      .cursor{display:none;}
+    }
+    @media (prefers-reduced-motion:reduce){
+      body{cursor:auto;}
+      .cursor{display:none;}
+      .frame{transition:none;}
     }
   </style>
 </head>
 <body>
-  <header>
+  <header id="header">
     <div class="brand" onclick="location.reload()">
       <img src="favicon1.png" alt="logo" />
     </div>
-    <div class="user">deutwp10</div>
   </header>
 
   <main class="stage" id="stage" data-tilt="on">
-    <div class="frame">
+    <div class="frame" id="frame">
       <figure>
-        <img class="shot" src="photo1.jpg" alt="takamura" />
+        <img class="shot" id="shot" src="photo1.jpg" alt="takamura" />
         <figcaption class="quote" id="quote"></figcaption>
       </figure>
     </div>
   </main>
 
+  <div class="cursor" id="cursor"></div>
+
   <script>
-    (function () {
-      const stage = document.getElementById('stage');
-      const frame = stage.querySelector('.frame');
-      let raf = null;
+  (function(){
+    const isTouch = 'ontouchstart' in window;
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const stage = document.getElementById('stage');
+    const frame = document.getElementById('frame');
+    const shot = document.getElementById('shot');
+    const cursorEl = document.getElementById('cursor');
 
-      function onMove(e) {
-        if (stage.dataset.tilt !== 'on') return;
-        stage.classList.add('tilting');
-        const rect = stage.getBoundingClientRect();
-        const x = (e.clientX - rect.left) / rect.width;
-        const y = (e.clientY - rect.top)  / rect.height;
-        const maxTilt = 4;
-        const tiltX = (y - 0.5) * -maxTilt;
-        const tiltY = (x - 0.5) *  maxTilt;
+    const quotes = [
+      "the world rusts. i remain sharp.",
+      "death is a craft. mine is flawless.",
+      "i don’t fight. i erase.",
+      "every swing writes your final chapter.",
+      "i am eternal, like the darkness beyond the light.",
+      "steel never doubts. neither do I.",
+      "your end is only my beginning.",
+      "silence falls after my blade.",
+      "unseen, unrivaled, unstoppable.",
+      "fear sharpens nothing. i am already a blade.",
+      "you think i'm senile, don't you?",
+      "takamura was described as a killer with no brakes.",
+      "He hates the people who are scum that dont deserve to live.",
+      "Takamura likes nothing.",
+      "takamura."
+    ];
+    document.getElementById('quote').textContent =
+      `“${quotes[Math.floor(Math.random()*quotes.length)]}”`;
 
-        if (!raf) {
-          raf = requestAnimationFrame(() => {
-            frame.style.transform = `rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
-            raf = null;
-          });
-        }
+    if (isTouch || reduce){
+      stage.dataset.tilt='off';
+      cursorEl.style.display='none';
+      return;
+    }
+
+    let raf=null; let tx=.5, ty=.5; let x=.5,y=.5;
+
+    function onMove(e){
+      const rect=stage.getBoundingClientRect();
+      tx=(e.clientX-rect.left)/rect.width;
+      ty=(e.clientY-rect.top)/rect.height;
+      cursorEl.style.transform=`translate(${e.clientX}px,${e.clientY}px)`;
+      if(!raf) raf=requestAnimationFrame(tick);
+    }
+    function onLeave(){tx=.5; ty=.5; if(!raf) raf=requestAnimationFrame(tick);}
+
+    function tick(){
+      raf=null;
+      const follow=0.15;
+      x+= (tx-x)*follow;
+      y+= (ty-y)*follow;
+
+      const maxTilt=5;
+      const tiltX=(y-.5)*-maxTilt;
+      const tiltY=(x-.5)* maxTilt;
+      frame.style.transform=`rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
+
+      const squash=.01*((Math.abs(tiltX)+Math.abs(tiltY))/(maxTilt*2));
+      shot.style.transform=`scale(${1+squash},${1-squash})`;
+
+      if(Math.abs(tx-x)+Math.abs(ty-y)>.001){
+        raf=requestAnimationFrame(tick);
       }
-      function onLeave() {
-        stage.classList.remove('tilting');
-        frame.style.transform = '';
-      }
+    }
 
-      stage.addEventListener('mousemove', onMove);
-      stage.addEventListener('mouseleave', onLeave);
-      if ('ontouchstart' in window) stage.dataset.tilt = 'off';
-
-      const quotes = [
-        "the world rusts. i remain sharp.",
-        "death is a craft. mine is flawless.",
-        "i don’t fight. i erase.",
-        "every swing writes your final chapter.",
-        "i am eternal, like the darkness beyond the light.",
-        "steel never doubts. neither do I.",
-        "your end is only my beginning.",
-        "silence falls after my blade.",
-        "unseen, unrivaled, unstoppable.",
-        "fear sharpens nothing. i am already a blade.",
-        "you think i'm senile, don't you?",
-        "takamura was described as a killer with no brakes.",
-        "He hates the people who are scum that dont deserve to live.",
-        "Takamura likes nothing.",
-        "takamura."
-      ];
-      const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
-      document.getElementById('quote').textContent = `“${randomQuote}”`;
-    })();
+    stage.addEventListener('mousemove',onMove);
+    stage.addEventListener('mouseleave',onLeave);
+  })();
   </script>
 </body>
 </html>
-
