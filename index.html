@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>deutwp10</title>
-  <link rel="icon" href="favicon1.png" />
+  <link rel="icon" href="favicon.png" />
   <style>
     :root{
       --bg:#000;
@@ -16,12 +16,12 @@
       --bar-bg:rgba(0,0,0,.753);
       --bar-border:rgba(15,15,15,.37);
       --hover-ms:100ms;
-
       --tilt-max:5;
       --squash-max:.014;
       --cursor-size:2px;
+      --bg-shift-x:0px;
+      --bg-shift-y:0px;
     }
-
     *,*::before,*::after{box-sizing:border-box;}
     html,body{height:100%;}
     body{
@@ -37,18 +37,18 @@
       isolation:isolate;
       cursor:none;
     }
-
-    /* задний фон страницы */
     body::before{
       content:"";
       position:fixed;
       inset:0;
       z-index:-1;
-      opacity:0.1;
-      background:url("bgblack.png") center/cover no-repeat;
-      filter:blur(6px) brightness(0.6);
+      opacity:0.5;
+      background:url("back.jpg") center/cover no-repeat;
+      filter:blur(10px) brightness(0.6);
+      transform:translate3d(var(--bg-shift-x), var(--bg-shift-y), 0) scale(1.02);
+      will-change:transform;
+      transition:transform .18s ease;
     }
-
     .stage{
       flex:1; display:grid; place-items:center;
       padding:12px 0 10vmin;
@@ -60,7 +60,6 @@
       will-change:transform;
       transition:transform .18s ease;
     }
-
     .shot{
       display:block;
       width:100%; height:auto;
@@ -70,7 +69,6 @@
       position:relative;
       z-index:1;
     }
-
     figcaption.quote{
       margin-top:8px; max-width:88%; margin-inline:auto;
       font-size:10px; line-height:1.35;
@@ -81,10 +79,28 @@
       animation:fadeUp 1200ms ease forwards 1000ms;
     }
     figcaption.quote:empty{display:none;}
-
+    .actions{ margin-top:24px; display:flex; justify-content:center; }
+    .meow-btn{
+      -webkit-tap-highlight-color:transparent;
+      appearance:none;
+      border:0px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.04);
+      color:var(--fg);
+      padding:6px 8px;
+      border-radius:8px;
+      font-size:10px; letter-spacing:.03em;
+      cursor:pointer;
+      transition:transform var(--hover-ms) ease, background var(--hover-ms) ease, border-color var(--hover-ms) ease, opacity var(--hover-ms) ease;
+      backdrop-filter:saturate(120%) blur(2px);
+      opacity:0;
+      transform:translateY(6px) scale(.98);
+      animation:btnIn .9s ease forwards 1600ms;
+    }
+    .meow-btn:hover{ background:rgba(255,255,255,.06); border-color:rgba(255,255,255,.12); opacity:1; transform:translateY(-1px); }
+    .meow-btn:active{ transform:translateY(0); }
     @keyframes fadeIn{0%{opacity:0; transform:scale(1.02)} 100%{opacity:1; transform:scale(1)}}
     @keyframes fadeUp{0%{opacity:0; transform:translateY(10px)} 100%{opacity:1; transform:translateY(0)}}
-
+    @keyframes btnIn{to{opacity:.92; transform:translateY(0) scale(1)}}
     .cursor{
       position:fixed; left:0; top:0; z-index:20; pointer-events:none;
       width:var(--cursor-size); height:var(--cursor-size);
@@ -94,7 +110,30 @@
       transform:translate(-100px,-100px);
       will-change:transform;
     }
-
+    #preloader{
+      position:fixed; inset:0;
+      display:grid; place-items:center;
+      background:#000;
+      z-index:1000;
+      opacity:1; visibility:visible;
+      transition:opacity .6s ease, visibility .6s ease;
+    }
+    #preloader.preloader--hide{
+      opacity:0; visibility:hidden;
+    }
+    .preloader__wrap{
+      display:flex; flex-direction:column; align-items:center; gap:14px;
+    }
+    .preloader__ring{
+      width:44px; height:44px; border-radius:50%;
+      border:2px solid rgba(255,255,255,.15);
+      border-top-color:#fff;
+      animation:spin 900ms linear infinite;
+    }
+    .preloader__label{
+      font-size:11px; letter-spacing:.06em; color:#c9c9c9; opacity:.8;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
     @media (max-width:520px){
       :root{--radius:14px; --bar-h:48px;}
       body{cursor:auto;}
@@ -104,20 +143,59 @@
       body{cursor:auto;}
       .cursor{display:none;}
       .frame{transition:none;}
+      #preloader{transition:none;}
+      .preloader__ring{animation:none;}
     }
   </style>
 </head>
 <body>
+  <div id="preloader" aria-hidden="true">
+    <div class="preloader__wrap">
+      <div class="preloader__ring"></div>
+      <div class="preloader__label">loading…</div>
+    </div>
+  </div>
+
   <main class="stage" id="stage" data-tilt="on">
     <div class="frame" id="frame">
       <figure>
         <img class="shot" id="shot" src="logo.png" alt="deutwp10" />
         <figcaption class="quote" id="quote"></figcaption>
+        <div class="actions">
+          <button class="meow-btn" id="meowBtn" type="button">> клик-клац <</button>
+        </div>
       </figure>
     </div>
   </main>
 
   <div class="cursor" id="cursor"></div>
+
+  <script>
+  (function(){
+    const pre = document.getElementById('preloader');
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const minMs = reduce ? 0 : 600;
+    const start = performance.now();
+    const loadingLines = [
+      "загрузка...",
+      "загружаемся...",
+      "гладим котят...",
+      "пьём молоко с мёдом...",
+      "синхронизируем данные...",
+      "взламываем котят..."
+    ];
+    const lbl = pre.querySelector('.preloader__label');
+    lbl.textContent = loadingLines[Math.floor(Math.random()*loadingLines.length)];
+    window.addEventListener('load', () => {
+      const elapsed = performance.now() - start;
+      const remain = Math.max(0, minMs - elapsed);
+      setTimeout(() => {
+        pre.classList.add('preloader--hide');
+        pre.addEventListener('transitionend', () => pre.remove(), { once:true });
+      }, remain);
+    });
+  })();
+  </script>
 
   <script>
   (function(){
@@ -127,6 +205,8 @@
     const frame = document.getElementById('frame');
     const shot = document.getElementById('shot');
     const cursorEl = document.getElementById('cursor');
+    const root = document.documentElement;
+    const meowBtn = document.getElementById('meowBtn');
 
     const quotes = [
       "медиагигант.",
@@ -135,6 +215,108 @@
     ];
     document.getElementById('quote').textContent =
       `“${quotes[Math.floor(Math.random()*quotes.length)]}”`;
+
+    const cats = ["cat1.jpg","cat2.jpg","cat3.jpg","cat4.jpg","cat5.jpg"];
+    const pick = cats[Math.floor(Math.random() * cats.length)];
+    shot.src = pick;
+    shot.alt = pick.replace(/\.\w+$/, "");
+    shot.addEventListener("error", () => { shot.src = "logo.png"; });
+
+    function kittensConfetti(){
+      if (reduce) return;
+      const c = document.createElement('canvas');
+      c.width = window.innerWidth;
+      c.height = window.innerHeight;
+      Object.assign(c.style, { position:'fixed', inset:'0', zIndex:990, pointerEvents:'none' });
+      document.body.appendChild(c);
+      const ctx = c.getContext('2d');
+      const onResize = () => { c.width = window.innerWidth; c.height = window.innerHeight; };
+      window.addEventListener('resize', onResize);
+
+      const sprite = new Image();
+      sprite.src = "confetti.png";
+
+      const CONFETTI_SIZE = 42;
+      const CONFETTI_OPACITY = 0.6;
+
+      const COUNT = Math.min(70, Math.floor((c.width*c.height)/40000));
+      const GRAV = 0.12, DRAG = 0.997, SPIN = 0.05;
+      const lifetime = 5600;
+      const fadeMs = 900;
+
+      const particles = [];
+      function spawn(){
+        for(let i=0;i<COUNT;i++){
+          const ang = Math.random()*Math.PI*2;
+          const spd = 1.6 + Math.random()*2.6;
+          particles.push({
+            x: Math.random()*c.width,
+            y: -30 + Math.random()*60,
+            vx: Math.cos(ang)*spd,
+            vy: Math.sin(ang)*spd*0.5 + (Math.random()*-0.6),
+            r: Math.random()*Math.PI*2,
+            vr: (Math.random()-.5)*SPIN,
+            wob: Math.random()*Math.PI*2,
+            wobSpd: 0.8 + Math.random()*0.6
+          });
+        }
+      }
+
+      let start = null, prev = null, rafId=null;
+      function loop(ts){
+        if(!start) start = ts;
+        if(!prev) prev = ts;
+        const dt = Math.min(40, ts - prev);
+        prev = ts;
+        const t = ts - start;
+
+        ctx.clearRect(0,0,c.width,c.height);
+
+        particles.forEach(p=>{
+          p.vx *= Math.pow(DRAG, dt/16);
+          p.vy = p.vy*Math.pow(DRAG, dt/16) + GRAV*(dt/16);
+          p.x += p.vx*(dt/16);
+          p.y += p.vy*(dt/16);
+          p.r += p.vr*(dt/16);
+          p.wob += p.wobSpd*(dt/1000);
+          const drift = Math.sin(p.wob)*0.6;
+          p.x += drift;
+
+          if (p.x < -CONFETTI_SIZE) p.x = c.width + CONFETTI_SIZE;
+          if (p.x > c.width + CONFETTI_SIZE) p.x = -CONFETTI_SIZE;
+
+          const alphaOut = t > lifetime - fadeMs ? Math.max(0, 1 - (t - (lifetime - fadeMs))/fadeMs) : 1;
+          const alphaIn = Math.min(1, t/300);
+          const alpha = alphaOut*alphaIn*CONFETTI_OPACITY;
+          if (alpha <= 0) return;
+
+          ctx.save();
+          ctx.globalAlpha = alpha;
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.r);
+          if (sprite.complete) {
+            ctx.drawImage(sprite, -CONFETTI_SIZE/2, -CONFETTI_SIZE/2, CONFETTI_SIZE, CONFETTI_SIZE);
+          } else {
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(-CONFETTI_SIZE/2, -CONFETTI_SIZE/2, CONFETTI_SIZE, CONFETTI_SIZE);
+          }
+          ctx.restore();
+        });
+
+        if (t < lifetime){
+          rafId = requestAnimationFrame(loop);
+        } else {
+          cancelAnimationFrame(rafId);
+          window.removeEventListener('resize', onResize);
+          c.remove();
+        }
+      }
+
+      spawn();
+      requestAnimationFrame(loop);
+    }
+
+    meowBtn.addEventListener('click', kittensConfetti);
 
     if (isTouch || reduce){
       stage.dataset.tilt='off';
@@ -167,6 +349,12 @@
       const squash=.01*((Math.abs(tiltX)+Math.abs(tiltY))/(maxTilt*2));
       shot.style.transform=`scale(${1+squash},${1-squash})`;
 
+      const bgRange = 16;
+      const bgX = (x - .5) * bgRange;
+      const bgY = (y - .5) * bgRange;
+      root.style.setProperty('--bg-shift-x', `${bgX}px`);
+      root.style.setProperty('--bg-shift-y', `${bgY}px`);
+
       if(Math.abs(tx-x)+Math.abs(ty-y)>.001){
         raf=requestAnimationFrame(tick);
       }
@@ -178,4 +366,3 @@
   </script>
 </body>
 </html>
-
